@@ -10,5 +10,16 @@ export default Object.create(null, {
       value: function () {
          return fetch(`${remoteURL}/animals`).then(e => e.json())
       }
-   }
+   },
+   post: {
+      value: function (newAnimal) {
+         return fetch(`${remoteURL}/animals`, {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/json"
+            },
+            body: JSON.stringify(newAnimal)
+         }).then(e => e.json())
+      }
+   },
 })

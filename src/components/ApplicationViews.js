@@ -1,11 +1,13 @@
 import { Route } from 'react-router-dom'
 import React, { Component } from "react"
 import AnimalList from './animal/AnimalList'
+import AnimalDetail from './animal/AnimalDetail'
+import AnimalForm from './animal/AnimalForm'
 import LocationList from './location/LocationList'
 import EmployeeList from './employee/EmployeeList'
 import "./applicationViews.css"
 import OwnersList from './owners/OwnersList';
-
+import AnimalManager from '../modules/AnimalManager';
 
 class ApplicationViews extends Component {
    // employeesFromAPI = [
@@ -54,6 +56,12 @@ class ApplicationViews extends Component {
          }))
    }
 
+   addAnimal = animal => AnimalManager.post(animal)
+      .then(() => AnimalManager.getAll())
+      .then(animals => this.setState({
+         animals: animals
+      }))
+
    // Example code. Make this fit into how you have written yours.
 
 
@@ -61,18 +69,17 @@ class ApplicationViews extends Component {
       console.log("componentDidMount ApplicationViews")
       const newState = {}
 
-      fetch("http://localhost:5002/animals")
-         .then(r => r.json())
-         .then(animals => newState.animals = animals)
-         .then(() => fetch("http://localhost:5002/employees")
-            .then(r => r.json()))
-         .then(employees => newState.employees = employees)
-         .then(() => fetch("http://localhost:5002/locations")
-            .then(r => r.json()))
-         .then(locations => newState.locations = locations)
-         // .then(() => this.setState(newState, this.showMe))
-         .then(() => this.setState(newState, () => { console.log("this state after fetch", this.state)}));
-   }
+      AnimalManager.getAll()
+      .then(animals => newState.animals = animals)
+      .then(() => fetch("http://localhost:5002/employees")
+         .then(r => r.json()))
+      .then(employees => newState.employees = employees)
+      .then(() => fetch("http://localhost:5002/locations")
+         .then(r => r.json()))
+      .then(locations => newState.locations = locations)
+      // .then(() => this.setState(newState, this.showMe))
+      .then(() => this.setState(newState, () => { console.log("this state after fetch", this.state)}));
+}
 
 
    render() {
@@ -87,8 +94,16 @@ class ApplicationViews extends Component {
             <Route exact path="/locations" render={(props) => {
                return <LocationList locations={this.state.locations} />
             }} />
-            <Route path="/animals" render={(props) => {
-                  return <AnimalList animals={this.state.animals} deleteAnimal={this.deleteAnimal}/>
+            <Route exact path="/animals" render={(props) => {
+               return <AnimalList {...props} animals={this.state.animals} deleteAnimal={this.deleteAnimal}/>
+            }} />
+            <Route path="/animals/:animalId(\d+)" render={(props) => {
+               return <AnimalDetail {...props} deleteAnimal={this.deleteAnimal} animals={this.state.animals} />
+            }} />
+            <Route path="/animals/new" render={(props) => {
+               return <AnimalForm {...props}
+                  addAnimal={this.addAnimal}
+                  employees={this.state.employees} />
             }} />
             <Route path="/employees" render={(props) => {
                return <EmployeeList employees={this.state.employees} />
