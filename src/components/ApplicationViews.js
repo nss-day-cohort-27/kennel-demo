@@ -1,4 +1,4 @@
-import { Route } from 'react-router-dom'
+import { Route, Redirect } from 'react-router-dom'
 import React, { Component } from "react"
 import AnimalList from './animal/AnimalList'
 import AnimalDetail from './animal/AnimalDetail'
@@ -8,8 +8,12 @@ import EmployeeList from './employee/EmployeeList'
 import "./applicationViews.css"
 import OwnersList from './owners/OwnersList';
 import AnimalManager from '../modules/AnimalManager';
+import Login from './Login'
 
 class ApplicationViews extends Component {
+
+   isAuthenticated = () => localStorage.getItem("credentials") !== null
+
    // employeesFromAPI = [
    //    { id: 1, name: "Jessica Younker" },
    //    { id: 2, name: "Jordan Nelson" },
@@ -45,7 +49,8 @@ class ApplicationViews extends Component {
    }
 
    deleteAnimal = id => {
-      fetch(`http://localhost:5002/animals/${id}`, {
+      //be sure to add the return
+      return fetch(`http://localhost:5002/animals/${id}`, {
          method: "DELETE"
       })
          .then(e => e.json())
@@ -59,11 +64,17 @@ class ApplicationViews extends Component {
    addAnimal = animal => AnimalManager.post(animal)
       .then(() => AnimalManager.getAll())
       .then(animals => this.setState({
-         animals: animals
+         animals: animals,
       }))
 
    // Example code. Make this fit into how you have written yours.
-
+   editAnimal = (animal, id) => {
+      return AnimalManager.update(animal, id)
+      .then(() => AnimalManager.getAll())
+      .then(animals => this.setState({
+         animals: animals,
+      }))
+   }
 
    componentDidMount() {
       console.log("componentDidMount ApplicationViews")
@@ -79,7 +90,8 @@ class ApplicationViews extends Component {
       .then(locations => newState.locations = locations)
       // .then(() => this.setState(newState, this.showMe))
       .then(() => this.setState(newState, () => { console.log("this state after fetch", this.state)}));
-}
+   }
+
 
 
    render() {
@@ -88,26 +100,43 @@ class ApplicationViews extends Component {
       //https://reacttraining.com/react-router/web/example/basic
       return (
          <main>
+            <Route path="/login" component={Login} />
+
             <Route exact path="/" render={(props) => {
                return <LocationList locations={this.state.locations} />
             }} />
             <Route exact path="/locations" render={(props) => {
                return <LocationList locations={this.state.locations} />
             }} />
+
+
             <Route exact path="/animals" render={(props) => {
                return <AnimalList {...props} animals={this.state.animals} deleteAnimal={this.deleteAnimal}/>
             }} />
             <Route path="/animals/:animalId(\d+)" render={(props) => {
-               return <AnimalDetail {...props} deleteAnimal={this.deleteAnimal} animals={this.state.animals} />
+               return <AnimalDetail {...props}
+                     deleteAnimal={this.deleteAnimal}
+                     animals={this.state.animals}
+                     addAnimal={this.addAnimal}
+                     employees={this.state.employees}
+                     editAnimal={this.editAnimal} />
             }} />
             <Route path="/animals/new" render={(props) => {
                return <AnimalForm {...props}
                   addAnimal={this.addAnimal}
                   employees={this.state.employees} />
             }} />
+
+
             <Route path="/employees" render={(props) => {
-               return <EmployeeList employees={this.state.employees} />
+               if (this.isAuthenticated()) {
+                  return <EmployeeList deleteEmployee={this.deleteEmployee}
+                     employees={this.state.employees} />
+               } else {
+                  return <Redirect to="/login" />
+               }
             }} />
+
             <Route path="/owners" render={(props) => {
                return <OwnersList owners={this.state.owners} />
             }} />
